@@ -2,6 +2,7 @@
 // See DEPLOYMENT.md. Keep disabled until the real IDs have been filled in.
 export const submissionConfig = {
   enabled: false,
+  testModeEnabled: true,
   experimentId: "63Bze9fH4ylX",
   prolificCompletionUrl: "",
 };

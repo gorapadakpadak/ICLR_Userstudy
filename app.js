@@ -4,11 +4,31 @@ import { studyCopy } from "./study-copy.js?v=placement-8";
 import { eventDetails } from "./event-details.js?v=objects-1";
 import { studyConfig as config } from "./study-config.js?v=researcher-9";
 
-import { submissionConfig } from "./submission-config.js?v=datapipe-1";
+import { submissionConfig } from "./submission-config.js?v=datapipe-test-1";
 import { prolificIdentity, connectionProblem, sendSubmission } from "./submission.js?v=datapipe-1";
 
-const prolific = prolificIdentity(location.search);
-const setupProblem = connectionProblem(submissionConfig, prolific);
+const query = new URLSearchParams(location.search);
+const dataPipeTestMode = !submissionConfig.enabled && submissionConfig.testModeEnabled && query.get("DATAPIPE_TEST") === "1";
+function testIdentity() {
+  const key = "motion-study:datapipe-test-identity";
+  try {
+    const saved = JSON.parse(localStorage.getItem(key));
+    if (saved && Object.values(saved).every((value) => /^[a-f0-9]{24}$/.test(value))) return saved;
+    const makeId = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), (value) => value.toString(16).padStart(2, "0")).join("");
+    const created = Object.fromEntries(["PROLIFIC_PID", "STUDY_ID", "SESSION_ID"].map((name) => [name, makeId()]));
+    localStorage.setItem(key, JSON.stringify(created));
+    return created;
+  } catch {
+    const fallback = () => Array.from({ length: 24 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+    return Object.fromEntries(["PROLIFIC_PID", "STUDY_ID", "SESSION_ID"].map((name) => [name, fallback()]));
+  }
+}
+const prolific = dataPipeTestMode ? testIdentity() : prolificIdentity(location.search);
+const submissionEnabled = submissionConfig.enabled || dataPipeTestMode;
+const checkedSubmissionConfig = dataPipeTestMode
+  ? { ...submissionConfig, enabled: true, prolificCompletionUrl: "https://app.prolific.com/submissions/complete?cc=TESTMODE" }
+  : submissionConfig;
+const setupProblem = connectionProblem(checkedSubmissionConfig, prolific);
 let submitting = false;
 let submissionError = "";
 
@@ -100,10 +120,10 @@ function fingerprint(value) {
   return (hash >>> 0).toString(16);
 }
 const signature = fingerprint(JSON.stringify(config));
-const storageScope = submissionConfig.enabled ? JSON.stringify([submissionConfig.experimentId, prolific]) : "preview";
-const storageKey = `motion-study:${config.id}:${config.version}:${signature}${submissionConfig.enabled ? `:${storageScope}` : ""}`;
+const storageScope = submissionEnabled ? JSON.stringify([submissionConfig.experimentId, prolific]) : "preview";
+const storageKey = `motion-study:${config.id}:${config.version}:${signature}${submissionEnabled ? `:${storageScope}` : ""}`;
 const unblindedSignature = fingerprint(JSON.stringify({ ...config, blind: false }));
-const unblindedStorageKey = `motion-study:${config.id}:${config.version}:${unblindedSignature}${submissionConfig.enabled ? `:${storageScope}` : ""}`;
+const unblindedStorageKey = `motion-study:${config.id}:${config.version}:${unblindedSignature}${submissionEnabled ? `:${storageScope}` : ""}`;
 function shuffled(values) {
   const ids = [...values];
   for (let i = ids.length - 1; i > 0; i--) {
@@ -216,7 +236,7 @@ function render() {
   }
 }
 function navigate(next) {
-  if (submissionConfig.enabled && setupProblem) next = "intro";
+  if (submissionEnabled && setupProblem) next = "intro";
   else if (state.submission && next !== "intro") next = "thanks";
   if (next === "study" && !state.guidelinesCompletedAt) next = "guidelines";
   if (next === "thanks" && completion() !== assignedCases().length) next = "study";
@@ -230,7 +250,7 @@ function navigate(next) {
 }
 
 function introView() {
-  return `<main class="guidelines introduction-page"><div class="eyebrow">ABOUT THIS SURVEY</div><h1 tabindex="-1">${esc(studyCopy.title)}</h1><p class="guide-introduction">${esc(studyCopy.purpose)}</p><div class="intro-facts"><div><span>Estimated time</span><strong>${esc(studyCopy.estimatedTime)}</strong><p>${esc(studyCopy.timeNote)}</p></div><div><span>Your task</span><strong>${config.casesPerParticipant} cases · ${config.models.length} videos per case</strong><p>Event questions, followed by one overall preference question.</p></div></div><section class="guide-section"><h2>What you will do</h2><p>${esc(studyCopy.taskSummary)}</p><div class="intro-question-types">${studyCopy.taskTypes.map(type => `<section><h3>${esc(type.title)}</h3><p>${esc(type.text)}</p></section>`).join("")}</div><p>On the next page, try an example using the same controls as the survey. Complete all practice questions before starting. Practice answers are not part of your responses.</p></section><section class="guide-section"><h2>Before you begin</h2><ol class="intro-precautions">${[...studyCopy.precautions, ...(submissionConfig.enabled ? [ "Your participation ID and video assignment are recorded when you open the survey. Your answers are saved in this browser while you work. At the end, submit your responses, wait for confirmation, then return to Prolific. Your Prolific participant, study, and session IDs are included with your responses."] : [])].map((text) => `<li>${esc(text)}</li>`).join("")}</ol></section><div class="start-panel"><p>${esc(setupProblem || (state.submission ? "Your responses are locked for submission. Continue to check their status." : "First, review the guidelines and example."))}</p><button class="button primary" id="open-guidelines" ${setupProblem ? "disabled" : ""}>${state.submission ? "View submission status" : state.guidelinesCompletedAt ? "Continue evaluation" : "Continue to guidelines"} ${icon("arrow", 17)}</button></div></main>`;
+  return `<main class="guidelines introduction-page">${dataPipeTestMode ? '<div class="preview-banner"><strong>DataPipe test mode</strong><span>This run will save synthetic test IDs, the model assignment, and your completed responses to the researcher\'s Google Drive.</span></div>' : ""}<div class="eyebrow">ABOUT THIS SURVEY</div><h1 tabindex="-1">${esc(studyCopy.title)}</h1><p class="guide-introduction">${esc(studyCopy.purpose)}</p><div class="intro-facts"><div><span>Estimated time</span><strong>${esc(studyCopy.estimatedTime)}</strong><p>${esc(studyCopy.timeNote)}</p></div><div><span>Your task</span><strong>${config.casesPerParticipant} cases · ${config.models.length} videos per case</strong><p>Event questions, followed by one overall preference question.</p></div></div><section class="guide-section"><h2>What you will do</h2><p>${esc(studyCopy.taskSummary)}</p><div class="intro-question-types">${studyCopy.taskTypes.map(type => `<section><h3>${esc(type.title)}</h3><p>${esc(type.text)}</p></section>`).join("")}</div><p>On the next page, try an example using the same controls as the survey. Complete all practice questions before starting. Practice answers are not part of your responses.</p></section><section class="guide-section"><h2>Before you begin</h2><ol class="intro-precautions">${[...studyCopy.precautions, ...(submissionEnabled ? [ dataPipeTestMode ? "This is a storage test. Synthetic identifiers and your test responses will be sent to DataPipe and Google Drive." : "Your participation ID and video assignment are recorded when you open the survey. Your answers are saved in this browser while you work. At the end, submit your responses, wait for confirmation, then return to Prolific. Your Prolific participant, study, and session IDs are included with your responses."] : [])].map((text) => `<li>${esc(text)}</li>`).join("")}</ol></section><div class="start-panel"><p>${esc(setupProblem || (state.submission ? "Your responses are locked for submission. Continue to check their status." : "First, review the guidelines and example."))}</p><button class="button primary" id="open-guidelines" ${setupProblem ? "disabled" : ""}>${state.submission ? "View submission status" : state.guidelinesCompletedAt ? "Continue evaluation" : "Continue to guidelines"} ${icon("arrow", 17)}</button></div></main>`;
 }
 function guidelineView() { return studyView(true); }
 function guideCriteria(item, event, reference = false) {
@@ -294,17 +314,17 @@ function eventContext(item, event) {
 
 function thanksView() {
   const receipt = state.submission?.receipt;
-  const online = submissionConfig.enabled;
+  const online = submissionEnabled;
   const status = receipt ? (receipt.status === "queued" ? "Received · storage pending" : "Submitted successfully") : online ? "Not submitted yet" : storageAvailable ? "Preview · saved locally" : "Download required";
   return `<main class="thanks-page"><h1 tabindex="-1">${receipt ? "Thank you." : online ? "Submit your responses" : "Thank you."}</h1><p class="thanks-description">You have completed all ${assignedCases().length} video sets.</p><div class="completion-receipt"><div><span>Completed</span><strong>${completion()} / ${assignedCases().length} sets ${icon("check", 17)}</strong></div><div><span>Responses</span><strong>${status}</strong></div></div>
-    ${online ? receipt ? `<a class="button primary" id="return-prolific" href="${esc(submissionConfig.prolificCompletionUrl)}">Return to Prolific ${icon("arrow", 17)}</a><p class="download-note">${receipt.status === "queued" ? "Your responses have been received. Transfer to the researcher's storage will be retried automatically. You do not need to submit again." : "Your responses have been saved. Return to Prolific to record your completion."}</p>` : `<button class="button primary" id="submit-responses" ${submitting || setupProblem ? "disabled" : ""}>${submitting ? "Submitting… Please wait" : state.submission ? "Retry submission" : "Submit responses"}</button><p class="download-note">Submission locks your answers. Wait for confirmation before returning to Prolific.</p>` : '<p class="download-note">Preview only. Your responses have not been sent to a server.</p>'}
+    ${online ? receipt ? dataPipeTestMode ? `<p class="download-note">DataPipe test completed. Your test response was saved; no Prolific redirect is used in test mode.</p>` : `<a class="button primary" id="return-prolific" href="${esc(submissionConfig.prolificCompletionUrl)}">Return to Prolific ${icon("arrow", 17)}</a><p class="download-note">${receipt.status === "queued" ? "Your responses have been received. Transfer to the researcher's storage will be retried automatically. You do not need to submit again." : "Your responses have been saved. Return to Prolific to record your completion."}</p>` : `<button class="button primary" id="submit-responses" ${submitting || setupProblem ? "disabled" : ""}>${submitting ? "Submitting… Please wait" : state.submission ? "Retry submission" : "Submit responses"}</button><p class="download-note">Submission locks your answers. Wait for confirmation before returning to Prolific.</p>` : '<p class="download-note">Preview only. Your responses have not been sent to a server.</p>'}
     <p id="submission-message" class="error-text" role="status">${esc(submissionError || setupProblem)}</p>
     <button class="button secondary" id="download">${icon("download", 18)} Download responses</button>
     ${state.submission ? "" : `<button class="text-button review-button" id="review">${icon("back", 16)} Review my responses</button>`}</main>`;
 }
 
 async function submitResponses() {
-  if (submitting || state.submission?.receipt || !submissionConfig.enabled) return;
+  if (submitting || state.submission?.receipt || !submissionEnabled) return;
   if (setupProblem || !state.guidelinesCompletedAt || completion() !== assignedCases().length || config.demo) {
     submissionError = setupProblem || "Complete the practice and every survey question before submitting.";
     render(); return;
@@ -657,9 +677,9 @@ function labelAnswerKey() {
 }
 let assignmentUploading = false;
 async function uploadAssignment() {
-  if (!submissionConfig.enabled || setupProblem || assignmentUploading || state.assignmentSubmission?.receipt) return;
+  if (!submissionEnabled || setupProblem || assignmentUploading || state.assignmentSubmission?.receipt) return;
   if (!state.assignmentSubmission) {
-    const payload = {trial_type:"assignment", schemaVersion:6, recordType:"assignment", studyId:config.id, studyVersion:config.version, materialsRevision:config.materialsRevision, manifestFingerprint:signature, participantId:state.participantId, prolific, assignedAt:state.startedAt, labelAnswerKey:labelAnswerKey()};
+    const payload = {trial_type:"assignment", schemaVersion:6, recordType:"assignment", submissionMode:dataPipeTestMode ? "datapipe-test" : "datapipe", studyId:config.id, studyVersion:config.version, materialsRevision:config.materialsRevision, manifestFingerprint:signature, participantId:state.participantId, prolific, assignedAt:state.startedAt, labelAnswerKey:labelAnswerKey()};
     state.assignmentSubmission = {filename:`assignment-${prolific.SESSION_ID}.json`, data:JSON.stringify(payload), receipt:null};
   }
   // save() deliberately ignores practice answers, but this record belongs to the main state.
@@ -675,8 +695,8 @@ function responsePayload() {
     trial_type: "response",
     schemaVersion: 6,
     recordType: "response",
-    prolific: submissionConfig.enabled ? prolific : null,
-    submissionMode: submissionConfig.enabled ? "datapipe" : "preview", studyId: config.id, studyVersion: config.version, materialsRevision: config.materialsRevision, manifestFingerprint: signature,
+    prolific: submissionEnabled ? prolific : null,
+    submissionMode: dataPipeTestMode ? "datapipe-test" : submissionConfig.enabled ? "datapipe" : "preview", studyId: config.id, studyVersion: config.version, materialsRevision: config.materialsRevision, manifestFingerprint: signature,
     demo: config.demo, blind: config.blind, participantId: session().participantId,
     startedAt: session().startedAt, completedAt: session().completedAt, exportedAt: new Date().toISOString(),
     assignment: { method: "weighted-random-without-replacement", algorithm: "sequential-proportional-weights-with-group-cap", groupConstraint: config.caseSamplingConstraint, presentationOrder: "uniform-random", caseWeights: Object.fromEntries(config.cases.map(item => [item.id, config.caseSamplingWeights?.[item.id] ?? 1])), casePoolIds: config.cases.map((item) => item.id), caseIds: session().caseIds, casesPerParticipant: config.casesPerParticipant },
@@ -723,7 +743,7 @@ try {
   if (requested === "study") screen = state.guidelinesCompletedAt ? "study" : "guidelines";
   if (requested === "guidelines") screen = "guidelines";
   if (requested === "thanks" && completion() === assignedCases().length && session().completedAt) screen = "thanks";
-  if (submissionConfig.enabled && setupProblem) screen = "intro";
+  if (submissionEnabled && setupProblem) screen = "intro";
   else if (state.submission && screen !== "intro") screen = "thanks";
   render();
   void uploadAssignment();
