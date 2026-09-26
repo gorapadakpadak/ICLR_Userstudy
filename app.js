@@ -659,7 +659,7 @@ let assignmentUploading = false;
 async function uploadAssignment() {
   if (!submissionConfig.enabled || setupProblem || assignmentUploading || state.assignmentSubmission?.receipt) return;
   if (!state.assignmentSubmission) {
-    const payload = {schemaVersion:6, recordType:"assignment", studyId:config.id, studyVersion:config.version, materialsRevision:config.materialsRevision, manifestFingerprint:signature, participantId:state.participantId, prolific, assignedAt:state.startedAt, labelAnswerKey:labelAnswerKey()};
+    const payload = {trial_type:"assignment", schemaVersion:6, recordType:"assignment", studyId:config.id, studyVersion:config.version, materialsRevision:config.materialsRevision, manifestFingerprint:signature, participantId:state.participantId, prolific, assignedAt:state.startedAt, labelAnswerKey:labelAnswerKey()};
     state.assignmentSubmission = {filename:`assignment-${prolific.SESSION_ID}.json`, data:JSON.stringify(payload), receipt:null};
   }
   // save() deliberately ignores practice answers, but this record belongs to the main state.
@@ -672,6 +672,7 @@ async function uploadAssignment() {
 
 function responsePayload() {
   return {
+    trial_type: "response",
     schemaVersion: 6,
     recordType: "response",
     prolific: submissionConfig.enabled ? prolific : null,
