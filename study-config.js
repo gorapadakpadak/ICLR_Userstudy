@@ -12,11 +12,12 @@ const models = [
 export const studyConfig = {
   id: "subject-action-study",
   materialsRevision: "r20260926-01",
-  interactionRevision: "fixed-event-interval-actions-10",
+  interactionRevision: "fixed-event-interval-actions-11",
   version: `${finalCases.length ? finalVersion : "template-2-en"}-sequential-1`,
   casesPerParticipant: 3,
   practiceCaseId,
   practiceCase: finalCases.find(item => item.id === practiceCaseId),
+  practiceExcludedEventIds: ["s1-1"], // Exclude the ambiguous Cries event from practice.
   // Relative draw weights; unlisted cases have weight 1. No repeats per participant.
   caseSamplingWeights: {
     "4XsII-V5muw_13884_B_seg01__add": 2,

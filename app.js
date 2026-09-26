@@ -31,6 +31,7 @@ const checkedSubmissionConfig = dataPipeTestMode
 const setupProblem = connectionProblem(checkedSubmissionConfig, prolific);
 let submitting = false;
 let submissionError = "";
+let screen = "intro";
 
 const app = document.querySelector("#app");
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -61,9 +62,13 @@ const range = (event) => `${time(event.start)} – ${time(event.end)}`;
 const session = () => screen === "guidelines" ? practiceState : state;
 const assignedCases = () => screen === "guidelines" ? [practiceCase] : state.caseIds.map((id) => config.cases.find((item) => item.id === id));
 const currentCase = () => assignedCases()[session().caseIndex];
-const questionIds = (item = currentCase()) => [...item.events.map((event) => event.id), "full"];
+const practiceEvents = (item) => item.id === config.practiceCaseId
+  ? item.events.filter((event) => !config.practiceExcludedEventIds?.includes(event.id))
+  : item.events;
+const ratedEvents = (item = currentCase()) => screen === "guidelines" ? practiceEvents(item) : item.events;
+const questionIds = (item = currentCase()) => [...ratedEvents(item).map((event) => event.id), "full"];
 const questionIndex = () => questionIds().indexOf(session().questionId);
-const totalQuestions = () => assignedCases().reduce((total, item) => total + 1 + item.events.length, 0);
+const totalQuestions = () => assignedCases().reduce((total, item) => total + 1 + ratedEvents(item).length, 0);
 const answeredQuestions = () => assignedCases().reduce((total, item) => total + questionCompletion(item), 0);
 const displayedModels = (item = currentCase()) => session().modelOrders[item.id].map((id) => config.models.find((model) => model.id === id));
 const currentEvent = () => currentCase().events.find((e) => e.id === session().questionId);
@@ -142,9 +147,8 @@ function emptyState() {
   };
 }
 let state = emptyState();
-let screen = "intro";
 const exampleSource = config.practiceCase || config.cases.find((item) => item.id === studyCopy.practiceCaseId) || config.cases[0];
-const exampleEvent = exampleSource.events.find((event) => event.id === studyCopy.practiceEventId) || exampleSource.events[0];
+const exampleEvent = practiceEvents(exampleSource).find((event) => event.id === studyCopy.practiceEventId) || practiceEvents(exampleSource)[0];
 const practiceCase = exampleSource;
 const practiceState = { caseIds: [practiceCase.id], caseIndex: 0, questionId: exampleEvent.id, answers: {}, modelOrders: { [practiceCase.id]: sampleModelOrder(config.models.map((model) => model.id), config.modelLeftmostWeights) } };
 const eventInfo = (item, event) => ({ action: event.action, objectText: event.objectText || "No specific object / target", objectId: event.objectId ?? null, ...(eventDetails[item.id]?.[event.id] || {}), ...(event.objectText ? { objectText: event.objectText, objectId: event.objectId ?? null } : {}) });
@@ -201,9 +205,9 @@ function eventComplete(item, event) {
   });
 }
 function fullComplete(item) { return config.models.some((m) => m.id === answers(item).preference); }
-function caseComplete(item) { return fullComplete(item) && item.events.every((e) => eventComplete(item, e)); }
+function caseComplete(item) { return fullComplete(item) && ratedEvents(item).every((e) => eventComplete(item, e)); }
 function completion() { return assignedCases().filter(caseComplete).length; }
-function questionCompletion(item) { return Number(fullComplete(item)) + item.events.filter((e) => eventComplete(item, e)).length; }
+function questionCompletion(item) { return Number(fullComplete(item)) + ratedEvents(item).filter((e) => eventComplete(item, e)).length; }
 function unansweredQuestions(item = currentCase()) {
   return questionIds(item).filter((id) => id === "full" ? !fullComplete(item) : !eventComplete(item, item.events.find((event) => event.id === id)));
 }
@@ -275,7 +279,7 @@ function studyView(practice = false) {
     ${questionStatusView(item)}
     ${config.demo ? '<div class="preview-banner"><strong>Preview</strong><span>Study videos have not been added yet. Responses entered here are for preview only.</span></div>' : ""}
     <section class="evaluation-panel" aria-labelledby="question-title">
-      <div class="panel-heading"><div><div class="question-heading-status"><span class="question-label">${event ? `${practice ? `Example event ${questionIndex()+1} of ${item.events.length}` : `Event ${questionIndex() + 1} of ${item.events.length}`}` : "Overall preference"}</span><span id="current-question-status" class="answer-status" role="status"></span></div><h2 id="question-title">${event ? "Is the action present, and is the subject correct?" : esc(studyCopy.preferenceQuestion)}</h2><p>${event ? "Rate each video. If the action is present, enter its first and last frame using the full-video frame numbers." : "Compare all four full videos. Check that no requested actions are missing and that they occur in the correct order, while considering visual quality, visual consistency, and natural motion."}</p></div><span class="range-badge">${event ? range(event) : "FULL VIDEO"}</span></div>
+      <div class="panel-heading"><div><div class="question-heading-status"><span class="question-label">${event ? `${practice ? `Example event ${questionIndex()+1} of ${ratedEvents(item).length}` : `Event ${questionIndex() + 1} of ${ratedEvents(item).length}`}` : "Overall preference"}</span><span id="current-question-status" class="answer-status" role="status"></span></div><h2 id="question-title">${event ? "Is the action present, and is the subject correct?" : esc(studyCopy.preferenceQuestion)}</h2><p>${event ? "Rate each video. If the action is present, enter its first and last frame using the full-video frame numbers." : "Compare all four full videos. Check that no requested actions are missing and that they occur in the correct order, while considering visual quality, visual consistency, and natural motion."}</p></div><span class="range-badge">${event ? range(event) : "FULL VIDEO"}</span></div>
       ${compactPromptView(config.cases.find(c => c.id === item.id) || item, event)}
       ${event ? eventContext(item, event) : ""}
       <div class="playback-toolbar"><span>${icon("repeat", 14)} <span id="playback-caption">${event ? `Repeating the fixed event interval · ${range(event)}` : "Repeating full video"}</span></span><div>${event ? "" : `<button id="full-video" class="text-button full-video-button" aria-pressed="true" disabled><strong>Full video</strong></button>`}<button id="toggle-play" class="text-button" disabled>${icon("pause", 15)}<span>Pause</span></button><button id="restart" class="text-button" disabled>${icon("repeat", 15)} Restart</button></div></div>
@@ -309,7 +313,7 @@ function eventContext(item, event) {
   const subject = item.subjects.find((s) => s.id === event.subjectId);
   const info = eventInfo(item, event);
   const subjectHint = subject.mask ? "Target subject outlined in color" : "Identify the target subject using the description";
-  return `<section class="event-context"><div class="reference-block"><div class="context-label">INITIAL FRAME <span style="color:${subject.color}">● ${esc(subject.label)}</span></div><div class="reference-image"><canvas id="reference-canvas" role="img" aria-label="Initial frame: ${esc(subject.description)}"></canvas><span class="reference-caption">${subjectHint}</span></div><p id="reference-status" role="status">Loading subject reference…</p></div><div class="event-description"><div class="context-label">TARGET EVENT <span class="small-range">${range(event)}</span></div><dl class="event-components"><div><dt>Subject</dt><dd><span class="subject-label" style="--subject-color:${subject.color}">${esc(subject.label)}</span> ${esc(subject.description)}</dd></div><div><dt>Action</dt><dd>${esc(info.action)}</dd></div><div class="object-component"><dt>Object / target</dt><dd>${esc(info.objectText)}</dd></div></dl><p class="object-instruction">Identify who performs which action, and the object or target involved.</p></div></section>`;
+  return `<section class="event-context"><div class="reference-block"><div class="context-label">INITIAL FRAME <span style="color:${subject.color}">● ${esc(subject.label)}</span></div><div class="reference-image"><canvas id="reference-canvas" role="img" aria-label="Initial frame: ${esc(subject.description)}"></canvas><span class="reference-caption">${subjectHint}</span></div><p id="reference-status" role="status">Loading subject reference…</p></div><div class="event-description"><div class="context-label">TARGET EVENT <span class="small-range">${range(event)}</span></div><dl class="event-components"><div><dt>Subject</dt><dd><span class="subject-label" style="--subject-color:${subject.color}">${esc(subject.label)}</span> ${esc(subject.description)}</dd></div><div><dt>Action</dt><dd>${esc(info.action)}<span class="action-frame-range">Frames ${eventFirstFrame(event,item)}–${eventLastFrame(event,item)}</span></dd></div><div class="object-component"><dt>Object / target</dt><dd>${esc(info.objectText)}</dd></div></dl><p class="object-instruction">Identify who performs which action, and the object or target involved.</p></div></section>`;
 }
 
 function thanksView() {

@@ -333,6 +333,7 @@ h1:focus { outline: none; }
 .event-components > div { display: grid; grid-template-columns: 110px 1fr; align-items: baseline; gap: 15px; }
 .event-components dt { font-size: 12px; color: #555; }
 .event-components dd { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.5; }
+.action-frame-range { display: block; margin-top: 2px; color: #3f5f86; font: 700 13px/1.4 Consolas, 'Liberation Mono', monospace; }
 .object-instruction { font-size: 12px; color: #555; line-height: 1.5; }
 @media (max-width:1000px) { .criteria-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width:480px) {

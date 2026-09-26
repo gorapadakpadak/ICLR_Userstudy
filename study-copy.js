@@ -19,5 +19,5 @@ export const studyCopy = {
     "Complete every event question and the final preference question before continuing to the next case. You can return to earlier questions to revise your answers.",
   ],
   practiceCaseId: "-9kDwdxVlEw_04841_D_seg01__add",
-  practiceEventId: "s1-1",
+  practiceEventId: "s1-2",
 };
