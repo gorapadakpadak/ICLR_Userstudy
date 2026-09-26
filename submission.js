@@ -6,10 +6,12 @@ export function prolificIdentity(search) {
 export function connectionProblem(settings, identity) {
   if (!settings.enabled) return "";
   if (!settings.experimentId?.trim()) return "The study is not ready to collect responses. Please contact the researcher on Prolific.";
-  try {
-    const url = new URL(settings.prolificCompletionUrl);
-    if (url.origin !== "https://app.prolific.com" || url.pathname !== "/submissions/complete" || !url.searchParams.get("cc")) throw new Error();
-  } catch { return "The study completion link is not configured. Please contact the researcher on Prolific."; }
+  if (settings.prolificCompletionUrl?.trim()) {
+    try {
+      const url = new URL(settings.prolificCompletionUrl);
+      if (url.origin !== "https://app.prolific.com" || url.pathname !== "/submissions/complete" || !url.searchParams.get("cc")) throw new Error();
+    } catch { return "The study completion link is invalid. Please contact the researcher on Prolific."; }
+  }
   if (!Object.values(identity).every(value => /^[a-f0-9]{24}$/i.test(value))) {
     return "Please open this study through Prolific so your participation can be recorded. If this message persists, contact the researcher on Prolific.";
   }

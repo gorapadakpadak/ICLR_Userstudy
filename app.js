@@ -5,10 +5,11 @@ import { eventDetails } from "./event-details.js?v=objects-1";
 import { studyConfig as config } from "./study-config.js?v=researcher-10";
 
 import { submissionConfig } from "./submission-config.js?v=datapipe-test-1";
-import { prolificIdentity, connectionProblem, sendSubmission } from "./submission.js?v=datapipe-1";
+import { prolificIdentity, connectionProblem, sendSubmission } from "./submission.js?v=datapipe-2";
 
 const query = new URLSearchParams(location.search);
-const dataPipeTestMode = !submissionConfig.enabled && submissionConfig.testModeEnabled && query.get("DATAPIPE_TEST") === "1";
+const dataPipeTestMode = submissionConfig.testModeEnabled && query.get("DATAPIPE_TEST") === "1";
+const localPreview = ["localhost", "127.0.0.1"].includes(location.hostname) && !submissionConfig.prolificCompletionUrl?.trim() && !query.has("PROLIFIC_PID") && !query.has("STUDY_ID") && !query.has("SESSION_ID");
 function testIdentity() {
   const key = "motion-study:datapipe-test-identity";
   try {
@@ -24,10 +25,10 @@ function testIdentity() {
   }
 }
 const prolific = dataPipeTestMode ? testIdentity() : prolificIdentity(location.search);
-const submissionEnabled = submissionConfig.enabled || dataPipeTestMode;
+const submissionEnabled = (submissionConfig.enabled && !localPreview) || dataPipeTestMode;
 const checkedSubmissionConfig = dataPipeTestMode
   ? { ...submissionConfig, enabled: true, prolificCompletionUrl: "https://app.prolific.com/submissions/complete?cc=TESTMODE" }
-  : submissionConfig;
+  : localPreview ? { ...submissionConfig, enabled: false } : submissionConfig;
 const setupProblem = connectionProblem(checkedSubmissionConfig, prolific);
 let submitting = false;
 let submissionError = "";
@@ -320,8 +321,9 @@ function thanksView() {
   const receipt = state.submission?.receipt;
   const online = submissionEnabled;
   const status = receipt ? (receipt.status === "queued" ? "Received · storage pending" : "Submitted successfully") : online ? "Not submitted yet" : storageAvailable ? "Preview · saved locally" : "Download required";
+  const completionUrl = submissionConfig.prolificCompletionUrl?.trim();
   return `<main class="thanks-page"><h1 tabindex="-1">${receipt ? "Thank you." : online ? "Submit your responses" : "Thank you."}</h1><p class="thanks-description">You have completed all ${assignedCases().length} video sets.</p><div class="completion-receipt"><div><span>Completed</span><strong>${completion()} / ${assignedCases().length} sets ${icon("check", 17)}</strong></div><div><span>Responses</span><strong>${status}</strong></div></div>
-    ${online ? receipt ? dataPipeTestMode ? `<p class="download-note">DataPipe test completed. Your test response was saved; no Prolific redirect is used in test mode.</p>` : `<a class="button primary" id="return-prolific" href="${esc(submissionConfig.prolificCompletionUrl)}">Return to Prolific ${icon("arrow", 17)}</a><p class="download-note">${receipt.status === "queued" ? "Your responses have been received. Transfer to the researcher's storage will be retried automatically. You do not need to submit again." : "Your responses have been saved. Return to Prolific to record your completion."}</p>` : `<button class="button primary" id="submit-responses" ${submitting || setupProblem ? "disabled" : ""}>${submitting ? "Submitting… Please wait" : state.submission ? "Retry submission" : "Submit responses"}</button><p class="download-note">Submission locks your answers. Wait for confirmation before returning to Prolific.</p>` : '<p class="download-note">Preview only. Your responses have not been sent to a server.</p>'}
+    ${online ? receipt ? dataPipeTestMode ? `<p class="download-note">DataPipe test completed. Your test response was saved; no Prolific redirect is used in test mode.</p>` : completionUrl ? `<a class="button primary" id="return-prolific" href="${esc(completionUrl)}">Return to Prolific ${icon("arrow", 17)}</a><p class="download-note">${receipt.status === "queued" ? "Your responses have been received. Transfer to the researcher's storage will be retried automatically. You do not need to submit again." : "Your responses have been saved. Return to Prolific to record your completion."}</p>` : `<a class="button primary" id="return-prolific" href="https://app.prolific.com/submissions">Return to Prolific ${icon("arrow", 17)}</a><p class="download-note">Your responses have been saved. Return to Prolific and complete the submission there.</p>` : `<button class="button primary" id="submit-responses" ${submitting || setupProblem ? "disabled" : ""}>${submitting ? "Submitting… Please wait" : state.submission ? "Retry submission" : "Submit responses"}</button><p class="download-note">Submission locks your answers. Wait for confirmation before returning to Prolific.</p>` : '<p class="download-note">Preview only. Your responses have not been sent to a server.</p>'}
     <p id="submission-message" class="error-text" role="status">${esc(submissionError || setupProblem)}</p>
     <button class="button secondary" id="download">${icon("download", 18)} Download responses</button></main>`;
 }
