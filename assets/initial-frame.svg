@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  <rect width="800" height="450" fill="#eee"/>
+  <path d="M0 415h800" stroke="#bbb"/>
+  <g id="s1">
+    <path d="M242 284l-9 121h27l15-89 13 89h27l-8-121z" fill="#606060"/>
+    <path d="M245 172q30-16 60 0l21 118h-94z" fill="#606060"/>
+    <path d="M245 176l-28 82 19 8 28-82m36-8 37 72-17 13-39-76" fill="none" stroke="#606060" stroke-width="20" stroke-linecap="round"/>
+    <circle cx="276" cy="134" r="31" fill="#606060"/>
+    <path d="M247 135q-13-47 28-42 37 0 33 43l-14-20-44 8z" fill="#606060"/>
+    <path d="M234 398h26v13h-39q-3-12 13-13m54 0h27l12 13h-39z" fill="#606060"/>
+  </g>
+  <g id="s2">
+    <path d="M504 285l-5 120h26l12-94 12 94h27l-10-120z" fill="#929292"/>
+    <path d="M508 175q29-19 58 0l19 118h-96z" fill="#929292"/>
+    <path d="M508 181l-25 81m82-81 30 80" fill="none" stroke="#929292" stroke-width="22" stroke-linecap="round"/>
+    <circle cx="537" cy="135" r="31" fill="#929292"/>
+    <path d="M506 143q-14-57 32-52 42 1 31 52l-15-29-44 10z" fill="#929292"/>
+    <path d="M499 398h26v13h-39q-3-12 13-13m50 0h27l12 13h-39z" fill="#929292"/>
+  </g>
+  <path d="M323 270h150v16H323zM334 286h11v110h-11m117-110h11v110h-11" fill="#aaa"/>
+  <path d="M367 242h22v28h-22z" fill="#fff" stroke="#777"/><path d="M389 247q20-2 12 14h-12" fill="none" stroke="#777" stroke-width="4"/>
+</svg>
