@@ -703,7 +703,7 @@ function responsePayload() {
     submissionMode: dataPipeTestMode ? "datapipe-test" : submissionConfig.enabled ? "datapipe" : "preview", studyId: config.id, studyVersion: config.version, materialsRevision: config.materialsRevision, manifestFingerprint: signature,
     demo: config.demo, blind: config.blind, participantId: session().participantId,
     startedAt: session().startedAt, completedAt: session().completedAt, exportedAt: new Date().toISOString(),
-    assignment: { method: "weighted-random-without-replacement", algorithm: "sequential-proportional-weights-with-repeat-group-penalty", groupConstraint: config.caseSamplingConstraint, presentationOrder: "uniform-random", caseWeights: Object.fromEntries(config.cases.map(item => [item.id, config.caseSamplingWeights?.[item.id] ?? 1])), casePoolIds: config.cases.map((item) => item.id), caseIds: session().caseIds, casesPerParticipant: config.casesPerParticipant },
+    assignment: { method: "uniform-random-without-replacement", algorithm: "sequential-uniform-draw-then-shuffle", groupConstraint: null, presentationOrder: "uniform-random", caseWeights: Object.fromEntries(config.cases.map(item => [item.id, 1])), casePoolIds: config.cases.map((item) => item.id), caseIds: session().caseIds, casesPerParticipant: config.casesPerParticipant },
     instructionsVersion: "complete-actions-intro-balanced-cases-8",
     practiceCaseId: config.practiceCaseId, guidelinesCompletedAt: state.guidelinesCompletedAt || null,
     timelineVersion: "prompt-highlights-only-5",

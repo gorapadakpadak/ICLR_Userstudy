@@ -12,23 +12,15 @@ const models = [
 export const studyConfig = {
   id: "subject-action-study",
   materialsRevision: "r20260926-01",
-  interactionRevision: "two-cases-repeat-penalty-14",
-  version: `${finalCases.length ? finalVersion : "template-2-en"}-sequential-2`,
+  interactionRevision: "two-cases-uniform-15",
+  version: `${finalCases.length ? finalVersion : "template-2-en"}-sequential-3`,
   casesPerParticipant: 2,
   practiceCaseId,
   practiceCase: finalCases.find(item => item.id === practiceCaseId),
   practiceEventIds: ["s1-2", "s1-6"], // One early and one late action keep the practice concise.
-  // Relative draw weights; unlisted cases have weight 1. No repeats per participant.
-  caseSamplingWeights: {
-    "4XsII-V5muw_13884_B_seg01__add": 10,
-    "tt0038650__shot_0256_img_0": 10,
-    "0HR01_seg01__add": 10,
-  },
-  caseSamplingConstraint: {
-    caseIds: ["4XsII-V5muw_13884_B_seg01__add", "tt0038650__shot_0256_img_0", "0HR01_seg01__add"],
-    maxCount: 2,
-    repeatWeightMultiplier: 0.15,
-  },
+  // Every case has the same probability; sampling is without replacement.
+  caseSamplingWeights: {},
+  caseSamplingConstraint: null,
   modelLeftmostWeights: { m01: 2 },
   demo: !finalCases.length, // Allows trying the form without real media. Exports are marked as demo.
   blind: true, // Display (a)–(d); exports preserve stable model IDs and per-case display order.
