@@ -63,7 +63,7 @@ const session = () => screen === "guidelines" ? practiceState : state;
 const assignedCases = () => screen === "guidelines" ? [practiceCase] : state.caseIds.map((id) => config.cases.find((item) => item.id === id));
 const currentCase = () => assignedCases()[session().caseIndex];
 const practiceEvents = (item) => item.id === config.practiceCaseId
-  ? item.events.filter((event) => !config.practiceExcludedEventIds?.includes(event.id))
+  ? item.events.filter((event) => config.practiceEventIds?.includes(event.id))
   : item.events;
 const ratedEvents = (item = currentCase()) => screen === "guidelines" ? practiceEvents(item) : item.events;
 const questionIds = (item = currentCase()) => [...ratedEvents(item).map((event) => event.id), "full"];
