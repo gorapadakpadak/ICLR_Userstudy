@@ -323,8 +323,7 @@ function thanksView() {
   return `<main class="thanks-page"><h1 tabindex="-1">${receipt ? "Thank you." : online ? "Submit your responses" : "Thank you."}</h1><p class="thanks-description">You have completed all ${assignedCases().length} video sets.</p><div class="completion-receipt"><div><span>Completed</span><strong>${completion()} / ${assignedCases().length} sets ${icon("check", 17)}</strong></div><div><span>Responses</span><strong>${status}</strong></div></div>
     ${online ? receipt ? dataPipeTestMode ? `<p class="download-note">DataPipe test completed. Your test response was saved; no Prolific redirect is used in test mode.</p>` : `<a class="button primary" id="return-prolific" href="${esc(submissionConfig.prolificCompletionUrl)}">Return to Prolific ${icon("arrow", 17)}</a><p class="download-note">${receipt.status === "queued" ? "Your responses have been received. Transfer to the researcher's storage will be retried automatically. You do not need to submit again." : "Your responses have been saved. Return to Prolific to record your completion."}</p>` : `<button class="button primary" id="submit-responses" ${submitting || setupProblem ? "disabled" : ""}>${submitting ? "Submitting… Please wait" : state.submission ? "Retry submission" : "Submit responses"}</button><p class="download-note">Submission locks your answers. Wait for confirmation before returning to Prolific.</p>` : '<p class="download-note">Preview only. Your responses have not been sent to a server.</p>'}
     <p id="submission-message" class="error-text" role="status">${esc(submissionError || setupProblem)}</p>
-    <button class="button secondary" id="download">${icon("download", 18)} Download responses</button>
-    ${state.submission ? "" : `<button class="text-button review-button" id="review">${icon("back", 16)} Review my responses</button>`}</main>`;
+    <button class="button secondary" id="download">${icon("download", 18)} Download responses</button></main>`;
 }
 
 async function submitResponses() {
@@ -365,7 +364,6 @@ function bindCommon() {
   document.querySelector("#submit-responses")?.addEventListener("click", submitResponses);
   document.querySelector("#open-guidelines")?.addEventListener("click", () => navigate(state.guidelinesCompletedAt ? "study" : "guidelines"));
   document.querySelector("#start")?.addEventListener("click", () => { save(); navigate("study"); });
-  document.querySelector("#review")?.addEventListener("click", () => navigate("study"));
   document.querySelector("#download")?.addEventListener("click", download);
 }
 function bindStudy() {
