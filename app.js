@@ -1,8 +1,8 @@
-import { sampleCaseIds, sampleModelOrder } from "./assignment.js?v=placement-8";
+import { sampleCaseIds, sampleModelOrder } from "./assignment.js?v=placement-9";
 import { compactPromptView, mountCompactPrompt } from "./timeline.js?v=fixed-event-10";
-import { studyCopy } from "./study-copy.js?v=placement-8";
+import { studyCopy } from "./study-copy.js?v=placement-9";
 import { eventDetails } from "./event-details.js?v=objects-1";
-import { studyConfig as config } from "./study-config.js?v=researcher-9";
+import { studyConfig as config } from "./study-config.js?v=researcher-10";
 
 import { submissionConfig } from "./submission-config.js?v=datapipe-test-1";
 import { prolificIdentity, connectionProblem, sendSubmission } from "./submission.js?v=datapipe-1";
@@ -703,7 +703,7 @@ function responsePayload() {
     submissionMode: dataPipeTestMode ? "datapipe-test" : submissionConfig.enabled ? "datapipe" : "preview", studyId: config.id, studyVersion: config.version, materialsRevision: config.materialsRevision, manifestFingerprint: signature,
     demo: config.demo, blind: config.blind, participantId: session().participantId,
     startedAt: session().startedAt, completedAt: session().completedAt, exportedAt: new Date().toISOString(),
-    assignment: { method: "weighted-random-without-replacement", algorithm: "sequential-proportional-weights-with-group-cap", groupConstraint: config.caseSamplingConstraint, presentationOrder: "uniform-random", caseWeights: Object.fromEntries(config.cases.map(item => [item.id, config.caseSamplingWeights?.[item.id] ?? 1])), casePoolIds: config.cases.map((item) => item.id), caseIds: session().caseIds, casesPerParticipant: config.casesPerParticipant },
+    assignment: { method: "weighted-random-without-replacement", algorithm: "sequential-proportional-weights-with-repeat-group-penalty", groupConstraint: config.caseSamplingConstraint, presentationOrder: "uniform-random", caseWeights: Object.fromEntries(config.cases.map(item => [item.id, config.caseSamplingWeights?.[item.id] ?? 1])), casePoolIds: config.cases.map((item) => item.id), caseIds: session().caseIds, casesPerParticipant: config.casesPerParticipant },
     instructionsVersion: "complete-actions-intro-balanced-cases-8",
     practiceCaseId: config.practiceCaseId, guidelinesCompletedAt: state.guidelinesCompletedAt || null,
     timelineVersion: "prompt-highlights-only-5",
