@@ -489,20 +489,20 @@ function refresh() {
       const unavailable = !config.demo && (!mediaReady.has(model.id) || !referenceReady);
       card.querySelectorAll("[data-field=action]").forEach((input) => { input.disabled = unavailable; });
       card.querySelectorAll("[data-field=subject]").forEach((input) => {
-        input.disabled = unavailable || response.action !== "present";
+        input.disabled = unavailable || response.action === "absent";
         input.checked = response.subject === input.value;
       });
       card.querySelectorAll("[data-frame-field]").forEach((input) => {
-        input.disabled = unavailable || response.action !== "present";
+        input.disabled = unavailable || response.action === "absent";
         input.required = response.action === "present";
         if (response.action === "absent") input.value = "";
         const value = response[input.dataset.frameField];
         const invalid = value !== null && (!Number.isInteger(value) || value < eventFirstFrame(event,item) || value > eventLastFrame(event,item) || (response.startFrame !== null && response.endFrame !== null && response.startFrame > response.endFrame));
         input.setAttribute("aria-invalid", String(invalid));
       });
-      card.querySelectorAll("[data-use-frame]").forEach((button) => { button.disabled = unavailable || response.action !== "present"; });
+      card.querySelectorAll("[data-use-frame]").forEach((button) => { button.disabled = unavailable || response.action === "absent"; });
       const help = card.querySelector(".frame-help");
-      help.textContent = response.action === "absent" ? "Action absent · Timing N/A" : response.action !== "present" ? "Select Present to enter the action timing." : validFrames(response, item, event) ? `Frames ${response.startFrame}–${response.endFrame} (inclusive)` : `Enter whole-video frames inside this event: ${eventFirstFrame(event,item)} ≤ start ≤ end ≤ ${eventLastFrame(event,item)}. Both are required.`;
+      help.textContent = response.action === "absent" ? "Action absent · Timing N/A" : response.action !== "present" ? `You may enter timing now. If you select Present, both frames are required within ${eventFirstFrame(event,item)}–${eventLastFrame(event,item)}.` : validFrames(response, item, event) ? `Frames ${response.startFrame}–${response.endFrame} (inclusive)` : `Enter whole-video frames inside this event: ${eventFirstFrame(event,item)} ≤ start ≤ end ≤ ${eventLastFrame(event,item)}. Both are required.`;
       card.querySelector(".frame-fields").classList.toggle("is-na", response.action === "absent");
       card.querySelector(".subject-field").classList.toggle("is-na", response.action === "absent");
       card.querySelector(".not-applicable").hidden = response.action !== "absent";

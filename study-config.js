@@ -12,7 +12,7 @@ const models = [
 export const studyConfig = {
   id: "subject-action-study",
   materialsRevision: "r20260926-01",
-  interactionRevision: "fixed-event-interval-actions-11",
+  interactionRevision: "fixed-event-interval-actions-12",
   version: `${finalCases.length ? finalVersion : "template-2-en"}-sequential-1`,
   casesPerParticipant: 3,
   practiceCaseId,
