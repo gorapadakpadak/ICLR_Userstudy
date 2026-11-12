@@ -3,6 +3,6 @@
 export const submissionConfig = {
   enabled: true,
   testModeEnabled: false,
-  experimentId: "63Bze9fH4ylX",
+  experimentId: "vgE255SOiW2C",
   prolificCompletionUrl: "",
 };
